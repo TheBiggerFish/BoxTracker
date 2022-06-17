@@ -18,6 +18,16 @@ services:
       - 8000:8000/tcp
     depends_on:
       - boxtracker_mongo
+  boxtracker_ui:
+    image: boxtracker_ui
+    restart: unless-stopped
+    build:
+      context: ui
+      dockerfile: Dockerfile
+    ports: 
+      - 3000:3000/tcp
+    depends_on:
+      - boxtracker_api
 volumes:
   mongo_data:
     driver: local
