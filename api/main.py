@@ -1,14 +1,22 @@
 from io import BytesIO
-from typing import Optional
+from typing import Callable, Optional
 
 import qrcode
 from fastapi import FastAPI, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pymongo import MongoClient
 
-from boxtracker.model import Box, UpdateBox
+from boxtracker.model import Box, BoxObjectFields, UpdateBox
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
+
 db_client = MongoClient(host='boxtracker_mongo', port=27017)
 box_collection = db_client['BOX_TRACKER'].BOXES
 
@@ -70,13 +78,13 @@ async def box_delete(box_name: str, response: Response) -> Optional[Box]:
     response.status_code = status.HTTP_204_NO_CONTENT
 
 
-@app.get('/tracker/qr/{box_name}')
-async def box_get_qr(box_name: str, response: Response):
-    if pull_box(box_name) is None:
+@app.get('/tracker/qr')
+async def box_get_qr(box: str, response: Response):
+    if pull_box(box) is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return None
 
-    url = f'192.168.1.15:8000/boxes/{box_name}'
+    url = f'192.168.1.15:8000/boxes/{box}'
     img = qrcode.make(url)
     buffered = BytesIO()
     img.save(buffered, format="jpeg")
@@ -84,7 +92,11 @@ async def box_get_qr(box_name: str, response: Response):
     return StreamingResponse(buffered, media_type='image/jpeg')
 
 
-@app.get('/tracker/search/{query}')
-async def search_box(query: str) -> list[Box]:
-    boxes = map(Box.from_dict, box_collection.find())
-    return list(filter(lambda box: box.matches_string(query), boxes))
+@app.get('/tracker/search')
+async def box_search(query: str, fields: int = 1, exact: bool = False):
+    fieldFlags = BoxObjectFields(fields)
+    matches_func: Callable[[Box], bool] = (
+        lambda box: box.matches_string(query, fieldFlags, exact))
+    all_boxes = map(Box.from_dict, box_collection.find())
+    matching_boxes = filter(matches_func, all_boxes)
+    return list(matching_boxes)

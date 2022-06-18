@@ -1,7 +1,15 @@
+from enum import IntFlag
 from typing import Optional
 
 from bson import ObjectId
 from pydantic import BaseModel, Field
+
+
+class BoxObjectFields(IntFlag):
+    NAME = 1
+    DESC = 2
+    LOCATION = 4
+    CONTENTS = 8
 
 
 class PyObjectId(ObjectId):
@@ -31,13 +39,27 @@ class Box(BaseModel):
     def from_dict(dict_: dict) -> 'Box':
         return Box(**dict_)
 
-    def matches_string(self, string: str) -> bool:
-        for field in {self.name, self.desc, self.location}:
-            if field is not None and string in field:
+    def _fields(self) -> dict[BoxObjectFields, str]:
+        return {
+            BoxObjectFields.NAME: self.name,
+            BoxObjectFields.DESC: self.desc,
+            BoxObjectFields.LOCATION: self.location,
+        }
+
+    @staticmethod
+    def _matches_field(field, exact, query) -> bool:
+        if exact:
+            return query == field
+        return query in field
+
+    def matches_string(self, string: str, fields: BoxObjectFields, exact: bool) -> bool:
+        for field, value in self._fields().items():
+            if field & fields and Box._matches_field(value, exact, string):
                 return True
-        for item in self.contents:
-            if string in item:
-                return True
+        if fields & BoxObjectFields.CONTENTS:
+            for object in self.contents:
+                if Box._matches_field(object, exact, string):
+                    return True
         return False
 
 

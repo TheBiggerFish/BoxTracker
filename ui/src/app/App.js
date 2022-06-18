@@ -1,11 +1,13 @@
-import {SearchForm} from '../components/search-form';
-import '../style/App.css';
+import { Header } from '../components/header';
+import {SearchScreen} from '../components/search-form';
+// import '../styles/App.css';
 
 function App() {
   return (
     <div className="App">
       <div>
-        <SearchForm />
+        <Header />
+        <SearchScreen />
       </div>
     </div>
   );
