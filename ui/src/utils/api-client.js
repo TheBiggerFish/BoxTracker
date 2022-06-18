@@ -1,5 +1,5 @@
 
-const apiURL = 'http://localhost:8000/tracker'
+const apiURL = 'http://192.168.1.15:8000/tracker'
 async function client(
   endpoint,
   {data, method, headers: customHeaders, ...customConfig} = {}

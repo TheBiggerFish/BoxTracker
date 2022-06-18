@@ -1,16 +1,15 @@
 import * as React from 'react'
 import {useQuery} from 'react-query'
-import {BoxListUL, Input} from './lib'
 import {FaSearch, FaTimes, FaSpinner} from 'react-icons/fa'
-import Tooltip from '@reach/tooltip'
 import {client} from '../utils/api-client'
 import * as colors from '../styles/colors'
-import {BoxListItem} from './box-list-item'
-import {Form,InputGroup,Button} from 'react-bootstrap'
+import {Form, InputGroup,Button, DropdownButton, Dropdown, ButtonGroup, NavDropdown} from 'react-bootstrap'
 
-function SearchScreen() {
+function SearchForm() {
+  const [text, setText] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [queried, setQueried] = React.useState(false)
+  const [searchField, setSearchField] = React.useState("Boxes")
 
   const {
     data: boxes = [],
@@ -19,48 +18,51 @@ function SearchScreen() {
     isError,
     isSuccess,
   } = useQuery({
-    queryKey: ['boxSearch', {query}],
+    queryKey: ["boxSearch", {query}],
     queryFn: () => client(`search?query=${query}&fields=15`)
   })
 
   function handleSubmit(event) {
     event.preventDefault()
-    setQuery(event.target.elements.search.value)
+    setQuery(text)
     setQueried(true)
   }
 
+  <InputGroup>
+    <Form.Control type="query" placeholder="Enter search text" />
+  </InputGroup>
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        <Input 
-          placeholder="Search boxes..." 
-          id="search" 
-          css={{width: '%100'}} 
+      <InputGroup>
+        <DropdownButton
+          variant="dark"
+          title={searchField}
+          onSelect={(eventKey, _) => setSearchField(eventKey)}
+          navbar={true}
+        >
+          <Dropdown.Item eventKey="Boxes">Boxes</Dropdown.Item>
+          <Dropdown.Item eventKey="Contents">Contents</Dropdown.Item>
+        </DropdownButton>
+        <Form.Control
+          type="text" 
+          placeholder="Enter search text" 
+          onChange={(event) => setText(event.target.value)}
         />
-        <Tooltip label="Search Boxes">
-          <label htmlFor='search'>
-            <button
-              type="submit"
-              css={{
-                border: '0',
-                position: 'relative',
-                marginLeft:'-35px',
-                background: 'transparent',
-              }}
-            >
-              {isLoading ? (
-                <FaSpinner aria-label="loading" />
-              ) : isError ? (
-                <FaTimes aria-label="error" css={{color: colors.danger}} />
-              ) : (
-                <FaSearch aria-label="search" />
-              )}
-            </button>
-          </label>
-        </Tooltip>
-      </form>
-      {queried && isError ? (
+        <Button
+          type="submit"
+          onClick={handleSubmit}
+        >
+          {queried && isLoading ? (
+            <FaSpinner aria-label="loading" />
+          ) : queried && isError ? (
+            <FaTimes aria-label="error" css={{color: colors.danger}} />
+          ) : (
+            <FaSearch aria-label="search" />
+          )}
+        </Button>
+      </InputGroup>
+      {/* {queried && isError ? (
         <div css={{color:colors.danger}} >
           <p>There was an error</p>
           <pre>{error.message}</pre>
@@ -79,9 +81,9 @@ function SearchScreen() {
         ) : (
           <p>{boxes.length} boxes total</p>
         )
-      ) : null}
+      ) : null} */}
     </div>
   )
 }
 
-export {SearchScreen};
+export {SearchForm};
