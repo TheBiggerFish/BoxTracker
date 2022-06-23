@@ -1,35 +1,29 @@
 import * as React from 'react'
-import {useQuery} from 'react-query'
 import {FaSearch, FaTimes, FaSpinner} from 'react-icons/fa'
-import {client} from '../utils/api-client'
 import * as colors from '../styles/colors'
-import {Form, InputGroup,Button, DropdownButton, Dropdown, ButtonGroup, NavDropdown} from 'react-bootstrap'
+import {Form,FormControl, InputGroup,Button, DropdownButton, Dropdown} from 'react-bootstrap'
+import {useQuery,updateQuery} from '../contexts/query-context'
 
 function SearchForm() {
-  const [text, setText] = React.useState('')
-  const [query, setQuery] = React.useState('')
-  const [queried, setQueried] = React.useState(false)
-  const [searchField, setSearchField] = React.useState("Boxes")
+  const [text, setText] = React.useState("")
+  const [searchField, setSearchField] = React.useState("Boxes-7")
+  const [{query, status}, queryDispatch] = useQuery()
+  const {queried} = query
 
-  const {
-    data: boxes = [],
-    error,
-    isLoading,
-    isError,
-    isSuccess,
-  } = useQuery({
-    queryKey: ["boxSearch", {query}],
-    queryFn: () => client(`search?query=${query}&fields=15`)
-  })
+  const isLoading = status === "pending"
+  const isError = status === "rejected"
 
   function handleSubmit(event) {
     event.preventDefault()
-    setQuery(text)
-    setQueried(true)
+    updateQuery(queryDispatch, query, {
+      text,
+      queried: true,
+      fields: parseInt(searchField.split('-')[1]),
+    })
   }
 
   <InputGroup>
-    <Form.Control type="query" placeholder="Enter search text" />
+    <Form.Control type="query" placeholder={isError ? "There was an error" : "Enter search text"} />
   </InputGroup>
 
   return (
@@ -37,17 +31,18 @@ function SearchForm() {
       <InputGroup>
         <DropdownButton
           variant="dark"
-          title={searchField}
+          title={searchField.split('-')[0]}
           onSelect={(eventKey, _) => setSearchField(eventKey)}
           navbar={true}
         >
-          <Dropdown.Item eventKey="Boxes">Boxes</Dropdown.Item>
-          <Dropdown.Item eventKey="Contents">Contents</Dropdown.Item>
+          <Dropdown.Item eventKey="Boxes-7">Boxes</Dropdown.Item>
+          <Dropdown.Item eventKey="Contents-8">Contents</Dropdown.Item>
         </DropdownButton>
-        <Form.Control
+        <FormControl
           type="text" 
           placeholder="Enter search text" 
-          onChange={(event) => setText(event.target.value)}
+          onChange={event => setText(event.target.value)}
+          onKeyPress={event => event.charCode === 13 ? handleSubmit(event) : null}
         />
         <Button
           type="submit"
@@ -62,26 +57,6 @@ function SearchForm() {
           )}
         </Button>
       </InputGroup>
-      {/* {queried && isError ? (
-        <div css={{color:colors.danger}} >
-          <p>There was an error</p>
-          <pre>{error.message}</pre>
-        </div>
-      ) : null}
-
-      {queried && isSuccess ? (
-        boxes.length > 0 ? (
-          <BoxListUL css={{marginTop: 20}}>
-            {boxes.map(box => (
-              <li key={box._id} aria-label={box.name}>
-                <BoxListItem key={box._id} box={box} />
-              </li>
-            ))}
-          </BoxListUL>
-        ) : (
-          <p>{boxes.length} boxes total</p>
-        )
-      ) : null} */}
     </div>
   )
 }

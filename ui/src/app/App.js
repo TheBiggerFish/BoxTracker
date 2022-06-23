@@ -1,11 +1,14 @@
 import { Header } from '../components/header';
+import { QueryProvider } from '../contexts/query-context'
+import { BoxList } from '../screens/box-list'
 
 function App() {
   return (
     <div className="App">
-      <div>
+      <QueryProvider>
         <Header />
-      </div>
+        <BoxList />
+      </QueryProvider>
     </div>
   );
 }
